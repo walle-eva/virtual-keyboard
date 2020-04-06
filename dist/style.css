@@ -1,0 +1,47 @@
+textarea {
+  width: 70%;
+  height: 150px;
+  margin-bottom: 30px;
+  box-sizing: border-box; }
+
+.row {
+  display: flex;
+  justify-content: space-between; }
+
+.key-elem {
+  border: 1px solid #ccc;
+  margin: 5px;
+  padding: 10px;
+  box-shadow: 2px 2px 2px #ccc;
+  box-shadow: 2px 2px 2px #999; }
+
+p[data-key='Space'] {
+  flex-grow: 1; }
+
+.key-elem:hover {
+  background: #0044ff; }
+
+.active {
+  background: #0044ff;
+  animation: anim  2s 1 ease-in-out; }
+
+.key-wrapper {
+  width: 70%;
+  margin: auto; }
+
+section {
+  text-align: center; }
+
+@keyframes anim {
+  from {
+    transform: scale(1, 1);
+    box-shadow: 2px 2px 2px #999; }
+  50% {
+    transform: scale(2, 2);
+    box-shadow: 2px 2px 2px #999; }
+  to {
+    transform: scale(1, 1);
+    box-shadow: 2px 2px 2px #999; } }
+
+
+/*# sourceMappingURL=style.css.map*/

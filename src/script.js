@@ -24,16 +24,10 @@ let pressedVirtual = new Set();
 
 let lang;
 
-const saveLang = (bool) => {
-    localStorage.setItem('En', bool);
-    console.log(bool)
-}
-
-
 if(localStorage.getItem('En') == true || localStorage.getItem('En') == null){
-    lang = EN;
+    lang = EN; console.log('en')
 } else {
-    lang = RU;
+    lang = RU; console.log('ru')
 }
 
 window.onload = function() {
@@ -263,4 +257,7 @@ const capitalCancel = () => {
     pressedVirtual.clear();
 }
 
-
+const saveLang = (bool) => {
+    localStorage.setItem('En', bool);
+    console.log(bool, localStorage.getItem('En'))
+}
