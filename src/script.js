@@ -17,9 +17,18 @@ const RU = [['`','1','2','3','4','5','6','7','8','9','0','-','=','Backspace'],
 ['Shift','\\','я','ч','с','м','и','т','ь','б','ю','\/','&#8593;','Shift'],
 ['Ctrl','Win','Alt','Space','Alt','Ctrl','&#8592;','&#8595;','&#8594;']]
 
+//множество для подсветки клавиш нажатых с клавиатуры
 let pressed = new Set();
+//множество для подсветки клавиш нажатых с экрана
+let pressedVirtual = new Set();
 
 let lang;
+
+const saveLang = (bool) => {
+    localStorage.setItem('En', bool);
+    console.log(bool)
+}
+
 
 if(localStorage.getItem('En') == true || localStorage.getItem('En') == null){
     lang = EN;
@@ -46,16 +55,19 @@ const generateElementsBlock = ()=>{
     section.append(div);
 }
 
-const generateElementKey = (arr) => {
-    lang = arr;
-    for(let i = 0; i < arr.length; i++){
+const generateElementKey = (arrLang) => {
+    lang = arrLang;
+    let bool = arrLang == EN ? true : false;
+    console.log(bool)
+    localStorage.setItem('En', false)
+    for(let i = 0; i < arrLang.length; i++){
       let div = document.createElement('div');
       div.classList.add('row');
-      for (let j = 0; j < arr[i].length; j++){
+      for (let j = 0; j < arrLang[i].length; j++){
           let p = document.createElement('p');
           p.classList.add('key-elem');
           p.setAttribute('data-key', KEYCODE[i][j])
-          p.innerHTML = arr[i][j];
+          p.innerHTML = arrLang[i][j];
           div.append(p);
       }
       let keyWrapper = document.querySelector('.key-wrapper');
@@ -75,7 +87,7 @@ const changeLanguage = (...codes) => {
     
         let pressed = new Set();
   
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', (event) => {
           pressed.add(event.code);
   
           for (let code of codes) { 
@@ -88,8 +100,8 @@ const changeLanguage = (...codes) => {
           pressed.clear();
 
           document.querySelector('.key-wrapper').innerHTML = '';
-
-          if(lang === EN){
+ 
+          if(lang == EN){
             generateElementKey(RU);
             saveLang(false)
           } else {
@@ -127,7 +139,7 @@ const clickKey = () => {
     let keys = document.querySelector('.key-wrapper');
     keys.addEventListener('click', clickVirtual)
 }
-let pressedVirtual = new Set();
+
 
 const clickVirtual = (event) => {
     let input = document.querySelector('textarea');
@@ -137,29 +149,17 @@ const clickVirtual = (event) => {
      
     pressedVirtual.add(event.target.getAttribute('data-key'));
 
-let flag = false;
+    let capital = false;
 
     if(pressedVirtual.has('CapsLock')){
-        flag = true;
+        capital = true;
         event.target.classList.add('active');
-        event.target.addEventListener('click', back)
+        event.target.addEventListener('click', capitalCancel)
         for(let i = 0; i < keys.length; i++){
             if(keys[i].innerHTML.length == 1){
             keys[i].innerHTML = keys[i].innerHTML.toUpperCase();
             } 
         }
-    }
-
-
-
-    function back(){
-    for(let i = 0; i < keys.length; i++){
-        if(keys[i].innerHTML.length == 1){
-        keys[i].innerHTML = keys[i].innerHTML.toLowerCase();
-        } 
-    }
-flag = false;
-    pressedVirtual.clear();
     }
 
 
@@ -171,8 +171,8 @@ flag = false;
             keys[i].classList.remove('active');
         } 
         event.target.classList.add('active');
-       if(!flag){
-        back();
+       if(!capital){
+        capitalCancel();
     }
     }
     
@@ -200,11 +200,9 @@ flag = false;
     }
     
     if(event.target.getAttribute(['data-key']) == 'Enter'){
-        //console.log(pos); xonsole.log(input.innerHTML.split('').splice(0, pos))
         let inputValue = input.innerHTML.split('');
         inputValue.splice(pos, 0, '\r\n');
         input.innerHTML = inputValue.join('');
-       // console.log(pos, input.innerHTML.split('').splice(1, 0, '\r\n'));
         setCaretPosition (input, input.innerHTML.length) 
         input.focus();
     }
@@ -221,42 +219,48 @@ flag = false;
     }
 
     
- 
-    function getCaretPosition (elem) {
-        var caretPos = 0;
-    
-        if (document.selection) { // ie
-            elem.focus ();
-            var range = document.selection.createRange ();
-            elem.moveStart ('character', -elem.innerHTML.length);
-            caretPos = range.text.length;
-        } else if (elem.selectionStart || elem.selectionStart == '0') { // Mozilla
-            caretPos = elem.selectionStart;
-        }
-    
-        return caretPos;
-    }
-    
-
-    function setCaretPosition (elem, caretPos) {
-        if (document.selection) { // ie
-            elem.focus ();
-            var range = document.selection.createRange ();
-            range.moveStart ('character', -elem.innerHTML.length);
-            range.moveStart ('character', caretPos);
-            range.moveEnd ('character', 0);
-            range.select ();
-        } else if (elem.selectionStart || elem.selectionStart == '0') { // Mozilla
-            elem.selectionStart = caretPos;
-            elem.selectionEnd = caretPos;
-            elem.focus ();
-        }
-    }
-    
 }
 
-const saveLang = (bool) => {
-    localStorage.setItem('En', bool);
-    
+const getCaretPosition =  (elem) => {
+    var caretPos = 0;
+
+    if (document.selection) { // ie
+        elem.focus ();
+        var range = document.selection.createRange ();
+        elem.moveStart ('character', -elem.innerHTML.length);
+        caretPos = range.text.length;
+    } else if (elem.selectionStart || elem.selectionStart == '0') { // Mozilla
+        caretPos = elem.selectionStart;
+    }
+
+    return caretPos;
 }
+
+
+const setCaretPosition =  (elem, caretPos) => {
+    if (document.selection) { // ie
+        elem.focus ();
+        var range = document.selection.createRange ();
+        range.moveStart ('character', -elem.innerHTML.length);
+        range.moveStart ('character', caretPos);
+        range.moveEnd ('character', 0);
+        range.select ();
+    } else if (elem.selectionStart || elem.selectionStart == '0') { // Mozilla
+        elem.selectionStart = caretPos;
+        elem.selectionEnd = caretPos;
+        elem.focus ();
+    }
+}
+
+const capitalCancel = () => {
+     let keys = document.querySelectorAll('.key-elem')
+    for(let i = 0; i < keys.length; i++){
+        if(keys[i].innerHTML.length == 1){
+        keys[i].innerHTML = keys[i].innerHTML.toLowerCase();
+        } 
+    }
+    capital = false;
+    pressedVirtual.clear();
+}
+
 

@@ -101,9 +101,17 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
 var EN = [['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace'], ['Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\\', 'DEL'], ['Caps Lock', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '\;', '\'', 'Enter'], ['Shift', '\\', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '\,', '\.', '\/', '&#8593;', 'Shift'], ['Ctrl', 'Win', 'Alt', 'Space', 'Alt', 'Ctrl', '&#8592;', '&#8595;', '&#8594;']];
 var KEYCODE = [['Backquote', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'Minus', 'Equal', 'Backspace'], ['Tab', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP', 'BracketLeft', 'BracketRight', 'Backslash', 'Delete'], ['CapsLock', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote', 'Enter'], ['ShiftLeft', 'Backslash', 'KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash', 'ArrowUp', 'ShiftRight'], ['ControlLeft', 'MetaLeft', 'AltLeft', 'Space', 'AltRight', 'ControlRight', 'ArrowLeft', 'ArrowDown', 'ArrowRight']];
-var RU = [['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace'], ['Tab', 'й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з', 'х', 'ъ', '\\', 'DEL'], ['Caps Lock', 'ф', 'ы', 'в', 'а', 'п', 'р', 'о', 'л', 'д', 'ж', 'э', 'Enter'], ['Shift', '\\', 'я', 'ч', 'с', 'м', 'и', 'т', 'ь', 'б', 'ю', '\/', '&#8593;', 'Shift'], ['Ctrl', 'Win', 'Alt', 'Space', 'Alt', 'Ctrl', '&#8592;', '&#8595;', '&#8594;']];
-var pressed = new Set();
+var RU = [['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace'], ['Tab', 'й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з', 'х', 'ъ', '\\', 'DEL'], ['Caps Lock', 'ф', 'ы', 'в', 'а', 'п', 'р', 'о', 'л', 'д', 'ж', 'э', 'Enter'], ['Shift', '\\', 'я', 'ч', 'с', 'м', 'и', 'т', 'ь', 'б', 'ю', '\/', '&#8593;', 'Shift'], ['Ctrl', 'Win', 'Alt', 'Space', 'Alt', 'Ctrl', '&#8592;', '&#8595;', '&#8594;']]; //множество для подсветки клавиш нажатых с клавиатуры
+
+var pressed = new Set(); //множество для подсветки клавиш нажатых с экрана
+
+var pressedVirtual = new Set();
 var lang;
+
+var saveLang = function saveLang(bool) {
+  localStorage.setItem('En', bool);
+  console.log(bool);
+};
 
 if (localStorage.getItem('En') == true || localStorage.getItem('En') == null) {
   lang = EN;
@@ -129,18 +137,21 @@ var generateElementsBlock = function generateElementsBlock() {
   section.append(div);
 };
 
-var generateElementKey = function generateElementKey(arr) {
-  lang = arr;
+var generateElementKey = function generateElementKey(arrLang) {
+  lang = arrLang;
+  var bool = arrLang == EN ? true : false;
+  console.log(bool);
+  localStorage.setItem('En', false);
 
-  for (var i = 0; i < arr.length; i++) {
+  for (var i = 0; i < arrLang.length; i++) {
     var div = document.createElement('div');
     div.classList.add('row');
 
-    for (var j = 0; j < arr[i].length; j++) {
+    for (var j = 0; j < arrLang[i].length; j++) {
       var p = document.createElement('p');
       p.classList.add('key-elem');
       p.setAttribute('data-key', KEYCODE[i][j]);
-      p.innerHTML = arr[i][j];
+      p.innerHTML = arrLang[i][j];
       div.append(p);
     }
 
@@ -186,7 +197,7 @@ var changeLanguage = function changeLanguage() {
     pressed.clear();
     document.querySelector('.key-wrapper').innerHTML = '';
 
-    if (lang === EN) {
+    if (lang == EN) {
       generateElementKey(RU);
       saveLang(false);
     } else {
@@ -226,19 +237,17 @@ var clickKey = function clickKey() {
   keys.addEventListener('click', clickVirtual);
 };
 
-var pressedVirtual = new Set();
-
 var clickVirtual = function clickVirtual(event) {
   var input = document.querySelector('textarea');
   var pos = getCaretPosition(input);
   var keys = document.querySelectorAll('.key-elem');
   pressedVirtual.add(event.target.getAttribute('data-key'));
-  var flag = false;
+  var capital = false;
 
   if (pressedVirtual.has('CapsLock')) {
-    flag = true;
+    capital = true;
     event.target.classList.add('active');
-    event.target.addEventListener('click', back);
+    event.target.addEventListener('click', capitalCancel);
 
     for (var i = 0; i < keys.length; i++) {
       if (keys[i].innerHTML.length == 1) {
@@ -247,29 +256,18 @@ var clickVirtual = function clickVirtual(event) {
     }
   }
 
-  function back() {
-    for (var _i = 0; _i < keys.length; _i++) {
-      if (keys[_i].innerHTML.length == 1) {
-        keys[_i].innerHTML = keys[_i].innerHTML.toLowerCase();
-      }
-    }
-
-    flag = false;
-    pressedVirtual.clear();
-  }
-
   if (event.target.closest('.key-elem') && event.target.innerHTML.length == 1) {
     input.innerHTML += event.target.innerHTML;
     setCaretPosition(input, pos + 1);
 
-    for (var _i2 = 0; _i2 < keys.length; _i2++) {
-      keys[_i2].classList.remove('active');
+    for (var _i = 0; _i < keys.length; _i++) {
+      keys[_i].classList.remove('active');
     }
 
     event.target.classList.add('active');
 
-    if (!flag) {
-      back();
+    if (!capital) {
+      capitalCancel();
     }
   }
 
@@ -298,13 +296,11 @@ var clickVirtual = function clickVirtual(event) {
   }
 
   if (event.target.getAttribute(['data-key']) == 'Enter') {
-    //console.log(pos); xonsole.log(input.innerHTML.split('').splice(0, pos))
     var _inputValue2 = input.innerHTML.split('');
 
     _inputValue2.splice(pos, 0, '\r\n');
 
-    input.innerHTML = _inputValue2.join(''); // console.log(pos, input.innerHTML.split('').splice(1, 0, '\r\n'));
-
+    input.innerHTML = _inputValue2.join('');
     setCaretPosition(input, input.innerHTML.length);
     input.focus();
   }
@@ -312,50 +308,59 @@ var clickVirtual = function clickVirtual(event) {
   if (pressedVirtual.has('ShiftLeft') || pressedVirtual.has('ShiftRight')) {
     event.target.classList.add('active');
 
-    for (var _i3 = 0; _i3 < keys.length; _i3++) {
-      if (keys[_i3].innerHTML.length == 1) {
-        keys[_i3].innerHTML = keys[_i3].innerHTML.toUpperCase();
+    for (var _i2 = 0; _i2 < keys.length; _i2++) {
+      if (keys[_i2].innerHTML.length == 1) {
+        keys[_i2].innerHTML = keys[_i2].innerHTML.toUpperCase();
       }
-    }
-  }
-
-  function getCaretPosition(elem) {
-    var caretPos = 0;
-
-    if (document.selection) {
-      // ie
-      elem.focus();
-      var range = document.selection.createRange();
-      elem.moveStart('character', -elem.innerHTML.length);
-      caretPos = range.text.length;
-    } else if (elem.selectionStart || elem.selectionStart == '0') {
-      // Mozilla
-      caretPos = elem.selectionStart;
-    }
-
-    return caretPos;
-  }
-
-  function setCaretPosition(elem, caretPos) {
-    if (document.selection) {
-      // ie
-      elem.focus();
-      var range = document.selection.createRange();
-      range.moveStart('character', -elem.innerHTML.length);
-      range.moveStart('character', caretPos);
-      range.moveEnd('character', 0);
-      range.select();
-    } else if (elem.selectionStart || elem.selectionStart == '0') {
-      // Mozilla
-      elem.selectionStart = caretPos;
-      elem.selectionEnd = caretPos;
-      elem.focus();
     }
   }
 };
 
-var saveLang = function saveLang(bool) {
-  localStorage.setItem('En', bool);
+var getCaretPosition = function getCaretPosition(elem) {
+  var caretPos = 0;
+
+  if (document.selection) {
+    // ie
+    elem.focus();
+    var range = document.selection.createRange();
+    elem.moveStart('character', -elem.innerHTML.length);
+    caretPos = range.text.length;
+  } else if (elem.selectionStart || elem.selectionStart == '0') {
+    // Mozilla
+    caretPos = elem.selectionStart;
+  }
+
+  return caretPos;
+};
+
+var setCaretPosition = function setCaretPosition(elem, caretPos) {
+  if (document.selection) {
+    // ie
+    elem.focus();
+    var range = document.selection.createRange();
+    range.moveStart('character', -elem.innerHTML.length);
+    range.moveStart('character', caretPos);
+    range.moveEnd('character', 0);
+    range.select();
+  } else if (elem.selectionStart || elem.selectionStart == '0') {
+    // Mozilla
+    elem.selectionStart = caretPos;
+    elem.selectionEnd = caretPos;
+    elem.focus();
+  }
+};
+
+var capitalCancel = function capitalCancel() {
+  var keys = document.querySelectorAll('.key-elem');
+
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i].innerHTML.length == 1) {
+      keys[i].innerHTML = keys[i].innerHTML.toLowerCase();
+    }
+  }
+
+  capital = false;
+  pressedVirtual.clear();
 };
 
 /***/ }),
