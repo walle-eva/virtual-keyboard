@@ -23,11 +23,12 @@ let pressed = new Set();
 let pressedVirtual = new Set();
 
 let lang;
+let capital = false;
 
-if(localStorage.getItem('En') == true || localStorage.getItem('En') == null){
-    lang = EN; console.log('en')
+if(localStorage.getItem('En') == 'true' || localStorage.getItem('En') == null){
+    lang = EN;
 } else {
-    lang = RU; console.log('ru')
+    lang = RU;
 }
 
 window.onload = function() {
@@ -50,10 +51,7 @@ const generateElementsBlock = ()=>{
 }
 
 const generateElementKey = (arrLang) => {
-    lang = arrLang;
-    let bool = arrLang == EN ? true : false;
-    console.log(bool)
-    localStorage.setItem('En', false)
+    
     for(let i = 0; i < arrLang.length; i++){
       let div = document.createElement('div');
       div.classList.add('row');
@@ -134,7 +132,6 @@ const clickKey = () => {
     keys.addEventListener('click', clickVirtual)
 }
 
-
 const clickVirtual = (event) => {
     let input = document.querySelector('textarea');
     let pos = getCaretPosition (input);
@@ -143,12 +140,12 @@ const clickVirtual = (event) => {
      
     pressedVirtual.add(event.target.getAttribute('data-key'));
 
-    let capital = false;
+     
+
+    if(event.target.closest('.key-elem')){
 
     if(pressedVirtual.has('CapsLock')){
-        capital = true;
         event.target.classList.add('active');
-        event.target.addEventListener('click', capitalCancel)
         for(let i = 0; i < keys.length; i++){
             if(keys[i].innerHTML.length == 1){
             keys[i].innerHTML = keys[i].innerHTML.toUpperCase();
@@ -157,17 +154,24 @@ const clickVirtual = (event) => {
     }
 
 
+    if (event.target.getAttribute(['data-key']) == 'CapsLock') {
+        capital = !capital;
+    }
+
     if(event.target.closest('.key-elem') && (event.target.innerHTML.length == 1)){
         input.innerHTML += event.target.innerHTML; 
         setCaretPosition (input, pos + 1);
         
         for(let i = 0; i < keys.length; i++){
-            keys[i].classList.remove('active');
+            if(keys[i].getAttribute('data-key') != 'CapsLosk'){
+                keys[i].classList.remove('active');
+            }
         } 
         event.target.classList.add('active');
-       if(!capital){
-        capitalCancel();
-    }
+        
+       if(capital == false){
+            capitalCancel();
+        }
     }
     
     if(event.target.getAttribute(['data-key']) == 'Delete'){
@@ -212,7 +216,7 @@ const clickVirtual = (event) => {
 
     }
 
-    
+}   
 }
 
 const getCaretPosition =  (elem) => {
@@ -248,16 +252,16 @@ const setCaretPosition =  (elem, caretPos) => {
 
 const capitalCancel = () => {
      let keys = document.querySelectorAll('.key-elem')
-    for(let i = 0; i < keys.length; i++){
+     capital = false;
+     for(let i = 0; i < keys.length; i++){
         if(keys[i].innerHTML.length == 1){
         keys[i].innerHTML = keys[i].innerHTML.toLowerCase();
         } 
     }
-    capital = false;
+    
     pressedVirtual.clear();
 }
 
 const saveLang = (bool) => {
     localStorage.setItem('En', bool);
-    console.log(bool, localStorage.getItem('En'))
 }
